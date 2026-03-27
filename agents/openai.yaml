@@ -1,0 +1,4 @@
+interface:
+  display_name: "MMXM Swing Point Scanner - ITP"
+  short_description: "Monitor manual LTP-selected FX pairs for Intermediate Term Perspective liquidity-run alerts."
+  default_prompt: "Use the bundled ITP skill to watch the manual LTP-selected pairs, scan with tvDatafeed using the last 5 candles and trimmed ongoing candle, and report only alert results. Do not place trades."

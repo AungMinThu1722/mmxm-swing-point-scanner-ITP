@@ -1,0 +1,9 @@
+{
+  "EURCHF": {
+    "exchange": "FOREXCOM",
+    "ltp_daily": true,
+    "daily_bias": "aim_for_swing_low",
+    "ltp_weekly": false,
+    "ltp_monthly": false
+  }
+}
