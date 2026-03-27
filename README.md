@@ -14,9 +14,9 @@ It is the alert layer between your manual LTP filter and your lower-timeframe co
 
 ## Default logic
 
-- `ltp_daily = true` -> watch previous H4 high/low within the day
-- `ltp_weekly = true` -> watch previous daily high/low during the week
-- `ltp_monthly = true` -> watch previous weekly high/low during the month
+- `ltp_daily = true` -> monitor H4 candles and alert when the latest closed H4 candle runs the previous H4 high/low
+- `ltp_weekly = true` -> monitor daily candles and alert when the latest closed daily candle runs the previous daily high/low
+- `ltp_monthly = true` -> monitor weekly candles and alert when the latest closed weekly candle runs the previous weekly high/low
 
 ## Prerequisites
 
@@ -68,3 +68,4 @@ The watchlist stays manual so another agent can update the pair list without gue
 
 Schedule `run_itp_heartbeat.ps1` to repeat every 15 minutes.
 The script runs one scan and exits, which is safer than a long-lived loop if a run takes longer than expected.
+The scan itself checks the latest closed candle on the reference timeframe, not a lower timeframe confirmation layer.

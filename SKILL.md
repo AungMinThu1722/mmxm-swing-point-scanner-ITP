@@ -14,17 +14,17 @@ Use this skill to run the ITP alert layer after LTP has already selected the pai
 1. Read the manual watchlist JSON.
 2. Keep only pairs marked active by LTP.
 3. Fetch FX data with `tvDatafeed`.
-4. Pull the last 5 candles by default.
+4. Pull the last 5 candles on the model's reference timeframe by default.
 5. Trim the ongoing candle before detection.
-6. Compare the trigger timeframe against the reference timeframe.
-7. Emit alerts when liquidity is run.
+6. Compare the latest closed candle to the previous candle on the same timeframe.
+7. Emit alerts when the latest candle runs the previous candle high or low.
 8. Save alert state so the same event does not repeat on every scan.
 
 ## Default models
 
-- `ltp_daily = true` -> watch previous H4 high/low within the day
-- `ltp_weekly = true` -> watch previous daily high/low during the week
-- `ltp_monthly = true` -> watch previous weekly high/low during the month
+- `ltp_daily = true` -> monitor H4 candles and alert when the latest closed H4 candle runs the previous H4 high/low
+- `ltp_weekly = true` -> monitor daily candles and alert when the latest closed daily candle runs the previous daily high/low
+- `ltp_monthly = true` -> monitor weekly candles and alert when the latest closed weekly candle runs the previous weekly high/low
 
 ## Alert rules
 
@@ -54,15 +54,9 @@ For Windows scheduling, use:
 .\run_itp_heartbeat.ps1
 ```
 
-You can override the trigger timeframe or batch settings with CLI args or env vars.
+You can override the candle count or batch settings with CLI args.
 
-Environment overrides:
-
-- `ITP_TIMEFRAME`
-- `ITP_BARS`
-- `ITP_TRIM_ONGOING`
-- `ITP_BATCH_SIZE`
-- `ITP_SLEEP_BETWEEN_BATCHES`
+The 15-minute heartbeat is just the scheduler cadence. The scan itself evaluates the latest closed candle on the reference timeframe.
 
 ## Implementation notes
 

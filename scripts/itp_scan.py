@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -87,7 +86,6 @@ def _scan_symbol(
     fetcher: TVDataFetcher,
     symbol: str,
     symbol_cfg: Dict[str, Any],
-    trigger_timeframe: str,
     bars: int,
     trim_ongoing: int,
     state_alerts: Dict[str, Any],
@@ -99,34 +97,33 @@ def _scan_symbol(
     if not models:
         return alerts
 
-    trigger_df = fetcher.fetch(symbol=symbol, exchange=exchange, timeframe=trigger_timeframe, bars=bars)
-    if trim_ongoing > 0 and len(trigger_df) > trim_ongoing:
-        trigger_df = trigger_df.iloc[:-trim_ongoing]
-    if trigger_df.empty:
-        return alerts
-
-    trigger_high = float(trigger_df["high"].max())
-    trigger_low = float(trigger_df["low"].min())
-
     for model in models:
-        ref_df = fetcher.fetch(symbol=symbol, exchange=exchange, timeframe=model["reference_timeframe"], bars=bars)
+        ref_df = fetcher.fetch(
+            symbol=symbol,
+            exchange=exchange,
+            timeframe=model["reference_timeframe"],
+            bars=bars,
+        )
         if trim_ongoing > 0 and len(ref_df) > trim_ongoing:
             ref_df = ref_df.iloc[:-trim_ongoing]
-        if ref_df.empty:
+        if len(ref_df) < 2:
             continue
 
-        ref_row = ref_df.iloc[-1]
-        ref_ts = str(ref_df.index[-1])
-        ref_high = float(ref_row["high"])
-        ref_low = float(ref_row["low"])
-        run_high = trigger_high > ref_high
-        run_low = trigger_low < ref_low
+        current_row = ref_df.iloc[-1]
+        previous_row = ref_df.iloc[-2]
+        current_ts = str(ref_df.index[-1])
+        current_high = float(current_row["high"])
+        current_low = float(current_row["low"])
+        previous_high = float(previous_row["high"])
+        previous_low = float(previous_row["low"])
+        run_high = current_high > previous_high
+        run_low = current_low < previous_low
 
         for side, is_triggered in (("high", run_high), ("low", run_low)):
             if not is_triggered:
                 continue
 
-            key = _alert_key(symbol, model["name"], model["reference_timeframe"], ref_ts, side)
+            key = _alert_key(symbol, model["name"], model["reference_timeframe"], current_ts, side)
             alert_new = key not in state_alerts
             alerted_at = _now_iso() if alert_new else state_alerts[key]["alerted_at"]
 
@@ -136,13 +133,13 @@ def _scan_symbol(
                     exchange=exchange,
                     model=model["name"],
                     bias=model.get("bias"),
-                    trigger_timeframe=trigger_timeframe,
+                    trigger_timeframe=model["reference_timeframe"],
                     reference_timeframe=model["reference_timeframe"],
                     reference_label=model["reference_label"],
-                    reference_high=ref_high,
-                    reference_low=ref_low,
-                    current_high=trigger_high,
-                    current_low=trigger_low,
+                    reference_high=previous_high,
+                    reference_low=previous_low,
+                    current_high=current_high,
+                    current_low=current_low,
                     run_high=run_high,
                     run_low=run_low,
                     alert_key=key,
@@ -165,7 +162,6 @@ def _scan_symbol(
 def scan_itp(
     watchlist_path: Path = DEFAULT_WATCHLIST,
     state_path: Path = DEFAULT_STATE,
-    trigger_timeframe: str = "15M",
     bars: int = 5,
     trim_ongoing: int = 1,
     batch_size: int = 9,
@@ -186,7 +182,6 @@ def scan_itp(
                 fetcher=fetcher,
                 symbol=symbol,
                 symbol_cfg=symbol_cfg,
-                trigger_timeframe=trigger_timeframe,
                 bars=bars,
                 trim_ongoing=trim_ongoing,
                 state_alerts=state_alerts,
@@ -205,11 +200,10 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the Intermediate Term Perspective alert monitor.")
     parser.add_argument("--watchlist", default=str(DEFAULT_WATCHLIST), help="Path to the ITP watchlist JSON")
     parser.add_argument("--state", default=str(DEFAULT_STATE), help="Path to the alert state JSON")
-    parser.add_argument("--timeframe", default=os.getenv("ITP_TIMEFRAME", "15M"), help="Trigger timeframe, usually 15M")
-    parser.add_argument("--bars", type=int, default=int(os.getenv("ITP_BARS", "5")), help="Candles to fetch per timeframe")
-    parser.add_argument("--trim-ongoing", type=int, default=int(os.getenv("ITP_TRIM_ONGOING", "1")), help="Trim latest ongoing candle")
-    parser.add_argument("--batch-size", type=int, default=int(os.getenv("ITP_BATCH_SIZE", "9")), help="Symbols per batch")
-    parser.add_argument("--sleep-between-batches", type=float, default=float(os.getenv("ITP_SLEEP_BETWEEN_BATCHES", "2")), help="Seconds between batches")
+    parser.add_argument("--bars", type=int, default=5, help="Candles to fetch per reference timeframe")
+    parser.add_argument("--trim-ongoing", type=int, default=1, help="Trim latest ongoing candle")
+    parser.add_argument("--batch-size", type=int, default=9, help="Symbols per batch")
+    parser.add_argument("--sleep-between-batches", type=float, default=2.0, help="Seconds between batches")
     return parser.parse_args()
 
 
@@ -218,7 +212,6 @@ if __name__ == "__main__":
     records = scan_itp(
         watchlist_path=Path(args.watchlist),
         state_path=Path(args.state),
-        trigger_timeframe=args.timeframe,
         bars=args.bars,
         trim_ongoing=args.trim_ongoing,
         batch_size=args.batch_size,

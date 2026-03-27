@@ -3,6 +3,7 @@
 ## Purpose
 
 Use this layer to alert on liquidity runs after LTP has already selected the pair.
+The scan compares the latest closed candle to the previous candle on the same reference timeframe.
 
 ## Trigger cadence
 
@@ -15,24 +16,24 @@ Use this layer to alert on liquidity runs after LTP has already selected the pai
 ### Daily LTP
 
 - `ltp_daily = true`
-- Watch the previous H4 candle high and low
-- Alert if either level is run within the day
+- Monitor H4 candles
+- Alert if the latest closed H4 candle runs the previous H4 high or low
 
 ### Weekly LTP
 
 - `ltp_weekly = true`
-- Watch the previous daily candle high and low
-- Alert if either level is run during the week
+- Monitor daily candles
+- Alert if the latest closed daily candle runs the previous daily high or low
 
 ### Monthly LTP
 
 - `ltp_monthly = true`
-- Watch the previous weekly candle high and low
-- Alert if either level is run during the month
+- Monitor weekly candles
+- Alert if the latest closed weekly candle runs the previous weekly high or low
 
 ## Output meaning
 
 - `run_high = true` means price traded above the reference high
 - `run_low = true` means price traded below the reference low
 - Alerts are not final trade decisions
-- Use lower-timeframe confirmation after the alert
+- No lower-timeframe confirmation layer is used in this skill
