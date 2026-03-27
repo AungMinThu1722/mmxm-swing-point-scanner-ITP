@@ -17,19 +17,22 @@ The scan compares the latest closed candle to the previous candle on the same re
 
 - `ltp_daily = true`
 - Monitor H4 candles
-- Alert if the latest closed H4 candle runs the previous H4 high or low
+- If bias is `aim_for_range_high`, alert on H4 low run only
+- If bias is `aim_for_range_low`, alert on H4 high run only
 
 ### Weekly LTP
 
 - `ltp_weekly = true`
 - Monitor daily candles
-- Alert if the latest closed daily candle runs the previous daily high or low
+- If bias is `aim_for_range_high`, alert on daily low run only
+- If bias is `aim_for_range_low`, alert on daily high run only
 
 ### Monthly LTP
 
 - `ltp_monthly = true`
 - Monitor weekly candles
-- Alert if the latest closed weekly candle runs the previous weekly high or low
+- If bias is `aim_for_range_high`, alert on weekly low run only
+- If bias is `aim_for_range_low`, alert on weekly high run only
 
 ## Output meaning
 

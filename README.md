@@ -15,9 +15,9 @@ In this repo, ITP is a recurring heartbeat job, not a one-shot scan.
 
 ## Default logic
 
-- `ltp_daily = true` -> monitor H4 candles and alert when the latest closed H4 candle runs the previous H4 high/low
-- `ltp_weekly = true` -> monitor daily candles and alert when the latest closed daily candle runs the previous daily high/low
-- `ltp_monthly = true` -> monitor weekly candles and alert when the latest closed weekly candle runs the previous weekly high/low
+- `ltp_daily = true` -> monitor H4 candles; if bias is `aim_for_range_high`, alert on H4 low run only, and if bias is `aim_for_range_low`, alert on H4 high run only
+- `ltp_weekly = true` -> monitor daily candles; if bias is `aim_for_range_high`, alert on daily low run only, and if bias is `aim_for_range_low`, alert on daily high run only
+- `ltp_monthly = true` -> monitor weekly candles; if bias is `aim_for_range_high`, alert on weekly low run only, and if bias is `aim_for_range_low`, alert on weekly high run only
 
 ## Prerequisites
 
@@ -71,3 +71,4 @@ Schedule `run_itp_heartbeat.ps1` to repeat every 15 minutes.
 The script runs one scan and exits, which is safer than a long-lived loop if a run takes longer than expected.
 The scan itself checks the latest closed candle on the reference timeframe only.
 No lower-timeframe confirmation layer is used inside this repo.
+The cron job keeps running on schedule; state is used to avoid repeating the same alert, not to stop scheduling.

@@ -31,6 +31,7 @@ class AlertRecord:
     trigger_timeframe: str
     reference_timeframe: str
     reference_label: str
+    trigger_side: str
     reference_high: Optional[float]
     reference_low: Optional[float]
     current_high: Optional[float]
@@ -78,6 +79,15 @@ def _build_models(symbol_cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
     return models
 
 
+def _desired_side(bias: Optional[str]) -> Optional[str]:
+    normalized = (bias or "").strip().lower()
+    if normalized in {"aim_for_range_high", "aim_for_swing_high", "bullish", "buy"}:
+        return "low"
+    if normalized in {"aim_for_range_low", "aim_for_swing_low", "bearish", "sell"}:
+        return "high"
+    return None
+
+
 def _alert_key(symbol: str, model: str, reference_timeframe: str, reference_ts: str, side: str) -> str:
     return f"{symbol}|{model}|{reference_timeframe}|{reference_ts}|{side}"
 
@@ -116,45 +126,60 @@ def _scan_symbol(
         current_low = float(current_row["low"])
         previous_high = float(previous_row["high"])
         previous_low = float(previous_row["low"])
-        run_high = current_high > previous_high
-        run_low = current_low < previous_low
+        desired_side = _desired_side(model.get("bias"))
+        if desired_side == "high":
+            run_high = current_high > previous_high
+            run_low = False
+            triggered = run_high
+        elif desired_side == "low":
+            run_low = current_low < previous_low
+            run_high = False
+            triggered = run_low
+        else:
+            run_high = current_high > previous_high
+            run_low = current_low < previous_low
+            triggered = run_high or run_low
 
-        for side, is_triggered in (("high", run_high), ("low", run_low)):
-            if not is_triggered:
-                continue
+        if not triggered:
+            continue
 
-            key = _alert_key(symbol, model["name"], model["reference_timeframe"], current_ts, side)
-            alert_new = key not in state_alerts
-            alerted_at = _now_iso() if alert_new else state_alerts[key]["alerted_at"]
+        side = desired_side
+        if side is None:
+            side = "high" if run_high else "low"
 
-            alerts.append(
-                AlertRecord(
-                    symbol=symbol,
-                    exchange=exchange,
-                    model=model["name"],
-                    bias=model.get("bias"),
-                    trigger_timeframe=model["reference_timeframe"],
-                    reference_timeframe=model["reference_timeframe"],
-                    reference_label=model["reference_label"],
-                    reference_high=previous_high,
-                    reference_low=previous_low,
-                    current_high=current_high,
-                    current_low=current_low,
-                    run_high=run_high,
-                    run_low=run_low,
-                    alert_key=key,
-                    alert_new=alert_new,
-                    alerted_at=alerted_at,
-                )
+        key = _alert_key(symbol, model["name"], model["reference_timeframe"], current_ts, side)
+        alert_new = key not in state_alerts
+        alerted_at = _now_iso() if alert_new else state_alerts[key]["alerted_at"]
+
+        alerts.append(
+            AlertRecord(
+                symbol=symbol,
+                exchange=exchange,
+                model=model["name"],
+                bias=model.get("bias"),
+                trigger_timeframe=model["reference_timeframe"],
+                reference_timeframe=model["reference_timeframe"],
+                reference_label=model["reference_label"],
+                trigger_side=side,
+                reference_high=previous_high,
+                reference_low=previous_low,
+                current_high=current_high,
+                current_low=current_low,
+                run_high=run_high,
+                run_low=run_low,
+                alert_key=key,
+                alert_new=alert_new,
+                alerted_at=alerted_at,
             )
+        )
 
-            if alert_new:
-                state_alerts[key] = {
-                    "alerted_at": alerted_at,
-                    "symbol": symbol,
-                    "model": model["name"],
-                    "side": side,
-                }
+        if alert_new:
+            state_alerts[key] = {
+                "alerted_at": alerted_at,
+                "symbol": symbol,
+                "model": model["name"],
+                "side": side,
+            }
 
     return alerts
 
