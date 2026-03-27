@@ -38,6 +38,7 @@ Use this skill to run the ITP alert layer after LTP has already selected the pai
 - `scripts/itp_scan.py` is the canonical runner.
 - `references/itp_watchlist.example.json` shows the watchlist structure.
 - `references/itp_models.md` explains the model mapping.
+- `run_itp_heartbeat.ps1` is the one-shot wrapper for Task Scheduler.
 
 ## Running
 
@@ -45,6 +46,12 @@ Use the default 15-minute heartbeat:
 
 ```bash
 python scripts/itp_scan.py
+```
+
+For Windows scheduling, use:
+
+```powershell
+.\run_itp_heartbeat.ps1
 ```
 
 You can override the trigger timeframe or batch settings with CLI args or env vars.

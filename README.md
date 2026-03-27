@@ -41,6 +41,12 @@ Run the alert monitor:
 python .\scripts\itp_scan.py
 ```
 
+Run the heartbeat wrapper once for Task Scheduler:
+
+```powershell
+.\run_itp_heartbeat.ps1
+```
+
 Install into a Codex skills workspace:
 
 ```powershell
@@ -57,3 +63,8 @@ You can also provide a destination:
 
 Any agent that understands `SKILL.md`-style bundles can use this repository directly.
 The watchlist stays manual so another agent can update the pair list without guessing the trading intent.
+
+## Task Scheduler
+
+Schedule `run_itp_heartbeat.ps1` to repeat every 15 minutes.
+The script runs one scan and exits, which is safer than a long-lived loop if a run takes longer than expected.
