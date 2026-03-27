@@ -9,6 +9,12 @@ ITP means Intermediate Term Perspective.
 
 Use this skill to run the ITP alert layer after LTP has already selected the pairs manually.
 
+Operational rule:
+
+- When the user says "run ITP", treat that as a recurring heartbeat job, not a one-shot scan.
+- Ensure the 15-minute scheduler is active or update it if the watchlist changes.
+- Do not switch to lower-timeframe confirmation inside this skill.
+
 ## Workflow
 
 1. Read the manual watchlist JSON.
@@ -30,7 +36,7 @@ Use this skill to run the ITP alert layer after LTP has already selected the pai
 
 - Treat every result as an alert, not a trade signal.
 - Do not place orders or make final trading decisions.
-- Use lower-timeframe confirmation after the alert.
+- No lower-timeframe confirmation layer is used in this skill.
 - Keep the scan limited to the manually selected LTP pairs.
 
 ## Scripts
@@ -56,7 +62,7 @@ For Windows scheduling, use:
 
 You can override the candle count or batch settings with CLI args.
 
-The 15-minute heartbeat is just the scheduler cadence. The scan itself evaluates the latest closed candle on the reference timeframe.
+The 15-minute heartbeat is the scheduler cadence. The scan itself evaluates the latest closed candle on the reference timeframe.
 
 ## Implementation notes
 

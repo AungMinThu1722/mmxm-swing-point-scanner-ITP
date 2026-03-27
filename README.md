@@ -11,6 +11,7 @@ The final orderflow interpretation, trade decision, and risk management must alw
 ITP means Intermediate Term Perspective.
 
 It is the alert layer between your manual LTP filter and your lower-timeframe confirmation.
+In this repo, ITP is a recurring heartbeat job, not a one-shot scan.
 
 ## Default logic
 
@@ -68,4 +69,5 @@ The watchlist stays manual so another agent can update the pair list without gue
 
 Schedule `run_itp_heartbeat.ps1` to repeat every 15 minutes.
 The script runs one scan and exits, which is safer than a long-lived loop if a run takes longer than expected.
-The scan itself checks the latest closed candle on the reference timeframe, not a lower timeframe confirmation layer.
+The scan itself checks the latest closed candle on the reference timeframe only.
+No lower-timeframe confirmation layer is used inside this repo.
